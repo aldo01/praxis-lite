@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Praxis — How It Works (Interactive)</title>
+<style>
+  :root{--bg:#0b1622;--panel:#12233a;--panel2:#0f1d30;--line:#24425f;--ink:#e8eef6;--dim:#8ea6bf;
+        --accent:#3aa0ff;--accent2:#14324a;--allow:#2ea043;--block:#e5484d;--ask:#f0a020;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:radial-gradient(1200px 600px at 70% -10%,#15304d 0,var(--bg) 55%);color:var(--ink);min-height:100vh}
+  a{color:var(--accent)}
+  header{padding:20px 28px 6px;display:flex;align-items:center;gap:14px}
+  header .logo{font-size:30px}
+  header h1{font-size:21px;margin:0;font-weight:700}
+  header p{margin:2px 0 0;color:var(--dim);font-size:13px}
+  .tabs{display:flex;gap:8px;padding:8px 28px 0;flex-wrap:wrap}
+  .tabs button{cursor:pointer;border:1px solid var(--line);background:#0e1f34;color:var(--dim);
+       padding:10px 15px;border-radius:10px 10px 0 0;font-size:13px;font-weight:700}
+  .tabs button.on{background:linear-gradient(180deg,var(--panel),var(--panel2));color:var(--ink);border-color:var(--accent);border-bottom-color:transparent}
+  .view{display:none;padding:14px 28px 44px} .view.on{display:block}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:16px}
+  .card h3{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim)}
+  .seg{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .seg button,.actbtn{flex:1;min-width:120px;cursor:pointer;border:1px solid var(--line);background:#0e1f34;color:var(--ink);
+       padding:11px 10px;border-radius:10px;font-size:13px;font-weight:600;text-align:center;transition:.15s}
+  .seg button:hover,.actbtn:hover{border-color:var(--accent)}
+  .seg button.on,.actbtn.on{background:var(--accent2);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .who-you.on{background:#123a2a;border-color:var(--allow);box-shadow:0 0 0 1px var(--allow) inset}
+  .who-agent.on{background:#3a2130;border-color:var(--block);box-shadow:0 0 0 1px var(--block) inset}
+  small{color:var(--dim);font-weight:500;font-size:11px}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px} .actbtn small{display:block;margin-top:2px}
+  .run{width:100%;margin-top:14px;padding:14px;border-radius:11px;border:none;cursor:pointer;
+       background:linear-gradient(90deg,#2f7fff,#3aa0ff);color:#fff;font-size:15px;font-weight:700}
+  .run:hover{filter:brightness(1.08)} .run:disabled{opacity:.5}
+  .hint{color:var(--dim);font-size:11.5px;margin-top:10px;line-height:1.5}
+  .grid3{display:grid;grid-template-columns:300px 1fr 340px;gap:18px;align-items:start}
+  @media(max-width:1100px){.grid3{grid-template-columns:1fr}}
+  /* pipeline */
+  .node{position:relative;display:flex;gap:14px;align-items:flex-start;padding:13px 15px;border:1px solid var(--line);
+        border-radius:12px;background:#0e1f33;transition:.25s;cursor:pointer}
+  .node:hover{border-color:#37597c}
+  .node .ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;background:#0a1728;border:1px solid var(--line);flex:none}
+  .node .t{font-weight:700;font-size:13.5px}.node .d{color:var(--dim);font-size:11.5px;margin-top:2px;line-height:1.4}
+  .node.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 0 22px -6px var(--accent)}
+  .node.active .ico{background:var(--accent2);border-color:var(--accent)}
+  .node.done{border-color:#2c4d6e}.node.skip{opacity:.3;filter:grayscale(.4)}
+  .node.v-allow{border-color:var(--allow)}.node.v-block{border-color:var(--block)}.node.v-ask{border-color:var(--ask)}
+  .conn{height:18px;width:2px;background:var(--line);margin-left:31px;overflow:hidden;position:relative}
+  .conn .dot{position:absolute;left:-3px;top:-8px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px 2px var(--accent);opacity:0}
+  .conn.flow .dot{animation:drop .5s linear forwards}
+  @keyframes drop{0%{opacity:1;top:-8px}100%{opacity:1;top:18px}}
+  .badge{margin-left:auto;align-self:center;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+  .badge.t{color:var(--accent);border-color:var(--accent)}
+  .verdict{border-radius:14px;padding:18px;text-align:center;border:1px solid var(--line);background:#0e1f33;margin-bottom:14px}
+  .verdict .big{font-size:28px;font-weight:800}
+  .verdict.allow{border-color:var(--allow);background:#0f2a1e}.verdict.allow .big{color:var(--allow)}
+  .verdict.block{border-color:var(--block);background:#2e141a}.verdict.block .big{color:var(--block)}
+  .verdict.ask{border-color:var(--ask);background:#2c2410}.verdict.ask .big{color:var(--ask)}
+  .verdict .sub{color:var(--dim);font-size:12px;margin-top:6px}
+  .rule{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;margin-top:8px;background:#0a1728;border:1px solid var(--line);border-radius:7px;padding:5px 8px;display:inline-block}
+  .narr .step{padding:7px 0;border-bottom:1px dashed #21384f;color:var(--dim);font-size:13px;line-height:1.55}
+  .narr .step.cur{color:var(--ink)} .narr .step b{color:var(--accent)}
+  .note{font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.55;border-top:1px solid var(--line);padding-top:10px}
+  kbd{font-family:ui-monospace,monospace;background:#0a1728;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11px}
+  /* models */
+  .models{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:1000px){.models{grid-template-columns:1fr 1fr}}
+  .model{border:1px solid var(--line);border-radius:14px;padding:16px;background:#0e1f33}
+  .model h4{margin:0 0 4px;font-size:15px}.model .sub2{color:var(--dim);font-size:12px;min-height:34px}
+  .model .row{font-size:12px;color:var(--dim);margin:8px 0;line-height:1.5}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-top:6px}
+  .pill.ok{background:#0f2a1e;color:var(--allow);border:1px solid var(--allow)}
+  .pill.no{background:#2e141a;color:var(--block);border:1px solid var(--block)}
+  .result{margin-top:10px;font-weight:700;font-size:13px}
+  .result.caught{color:var(--allow)}.result.escaped{color:var(--block)}
+  /* matrix */
+  table{border-collapse:collapse;width:100%;margin-top:10px}
+  th,td{border:1px solid var(--line);padding:12px;text-align:center;font-size:13px}
+  th{color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:11px}
+  td.cell{font-weight:800}
+  td.allow{background:#0f2a1e;color:var(--allow)}td.ask{background:#2c2410;color:var(--ask)}td.block{background:#2e141a;color:var(--block)}
+  td.rowh{color:var(--dim);font-weight:700;text-align:left}
+  /* tree */
+  .tree{font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:2.1}
+  .proc{cursor:pointer;padding:3px 8px;border-radius:7px;border:1px solid transparent;display:inline-block}
+  .proc:hover{border-color:var(--accent)}
+  .proc.agent{color:#ff9db0}.proc.you{color:#8ee6a8}
+  .proc.sel{background:var(--accent2);border-color:var(--accent)}
+  .foot{color:var(--dim);font-size:11.5px;text-align:center;padding-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🛡️</div>
+  <div><h1>Praxis — How It Works</h1>
+  <p>An interactive tour of the on-device guardrail for AI agents. Nothing here talks to a server; it's all local.</p></div>
+</header>
+<div class="tabs" id="tabs">
+  <button class="on" data-v="flow">▶ Request Flow</button>
+  <button data-v="intercept">🎯 Interception Models</button>
+  <button data-v="attr">🧬 OS Attribution</button>
+  <button data-v="matrix">⚖️ Policy Matrix</button>
+  <button data-v="arch">🏛️ Architecture</button>
+</div>
+
+<!-- ============ VIEW: FLOW ============ -->
+<div class="view on" id="v-flow">
+ <div class="grid3">
+  <div class="card">
+    <h3>1 · Who is calling?</h3>
+    <div class="seg" id="who">
+      <button class="who-you on" data-who="local">🧑 You<br><small>praxis:local</small></button>
+      <button class="who-agent" data-who="agent">🤖 AI agent<br><small>agent:codex</small></button>
+    </div>
+    <h3>2 · What action?</h3>
+    <div class="acts" id="acts">
+      <button class="actbtn on" data-act="read">Read a file<small>T0 · read</small></button>
+      <button class="actbtn" data-act="write">Write a file<small>T1 · write</small></button>
+      <button class="actbtn" data-act="delete">Delete a file<small>T2 · destructive</small></button>
+      <button class="actbtn" data-act="ssh">Read ~/.ssh key<small>T3 · secret</small></button>
+    </div>
+    <h3 style="margin-top:14px">3 · Interception layer</h3>
+    <div class="seg" id="layer">
+      <button class="on" data-layer="mcp">MCP<br><small>today</small></button>
+      <button data-layer="os">OS-level<br><small>roadmap</small></button>
+    </div>
+    <button class="run" id="run">▶ Run request</button>
+    <div class="hint" id="layerHint"></div>
+  </div>
+  <div class="card"><h3>Request pipeline (fail-closed, top → bottom)</h3><div id="pipe"></div></div>
+  <div class="card">
+    <h3>Outcome</h3>
+    <div class="verdict" id="verdict"><div class="big">—</div><div class="sub">Run a request to see the verdict</div></div>
+    <h3>What happened, step by step</h3>
+    <div class="narr" id="narr"><div class="step">Idle. Choose inputs and press <kbd>▶ Run request</kbd>.</div></div>
+    <div class="note" id="whoNote"></div>
+  </div>
+ </div>
+ <div class="foot">Same action • different verdict • decided by <b>who</b> asks and <b>how risky</b> it is. T3/secret &amp; unknown callers are always blocked.</div>
+</div>
+
+<!-- ============ VIEW: INTERCEPTION MODELS ============ -->
+<div class="view" id="v-intercept">
+ <div class="card" style="margin-bottom:16px">
+   <h3>The one question that decides everything: is Praxis <i>on the road</i>, or <i>beside</i> it?</h3>
+   <div class="seg" id="choice" style="max-width:560px">
+     <button class="on" data-choice="praxis">🤝 Agent uses the Praxis tool</button>
+     <button data-choice="native">🙈 Agent uses its OWN native tool / a raw <kbd>rm</kbd></button>
+   </div>
+   <div class="hint">Flip this to see which models still catch the action when the agent tries to route around Praxis.</div>
+ </div>
+ <div class="models" id="models"></div>
+ <div class="foot">On the road (wrap / proxy / syscall) = the call <b>must</b> pass through → real interception. Beside the road (offer a tool) = the call <b>may</b> pass through → best-effort.</div>
+</div>
+
+<!-- ============ VIEW: OS ATTRIBUTION ============ -->
+<div class="view" id="v-attr">
+ <div class="grid3">
+  <div class="card">
+    <h3>Who owns this process?</h3>
+    <p class="hint">At the OS layer every action is just a <b>process</b> making a syscall. Praxis only gates processes that belong to an <b>agent</b> — your own apps are never prompted. Click a process to run a <kbd>delete</kbd> from it.</p>
+    <div class="tree" id="tree">
+      <div>launchd  <small>(your login session)</small></div>
+      <div>├─ <span class="proc you" data-p="finder" data-k="you">Finder</span></div>
+      <div>├─ Terminal</div>
+      <div>│&nbsp;&nbsp;&nbsp;└─ <span class="proc you" data-p="yourzsh" data-k="you">zsh</span> <small>(you typing)</small></div>
+      <div>├─ <span class="proc you" data-p="vscode" data-k="you">VS Code</span></div>
+      <div>└─ <span class="proc agent" data-p="codex" data-k="agent">Codex.app</span> <small>← watched agent root</small></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="proc agent" data-p="agentzsh" data-k="agent">zsh -c "rm x"</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="proc agent" data-p="agentrm" data-k="agent">/bin/rm</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Attribution → principal → verdict</h3>
+    <div class="verdict" id="attrVerdict"><div class="big">—</div><div class="sub">Click a process on the left</div></div>
+    <div class="narr" id="attrNarr"><div class="step">Every syscall carries a pid. Praxis walks the <b>process tree</b>: if the process descends from a known agent app, it's <b>agent:*</b> and gets policy; otherwise it's <b>you</b> and flows freely.</div></div>
+  </div>
+  <div class="card">
+    <h3>Why this matters</h3>
+    <p class="hint" style="line-height:1.7">The <b>same</b> command <kbd>rm x</kbd> is allowed or gated purely by <b>which branch of the tree it grew from</b>. Your terminal's <kbd>rm</kbd> and Codex's <kbd>rm</kbd> are identical syscalls — attribution is what tells them apart. That's the OS-level version of the MCP principal, and it's why a real user is never spammed with prompts.</p>
+    <div class="note">Hard parts (staff signal): pid reuse → pin identity at exec-time &amp; track the tree; agent-created scripts run later → taint them; shared helper daemons → attribute per-request, not per-process.</div>
+  </div>
+ </div>
+</div>
+
+<!-- ============ VIEW: POLICY MATRIX ============ -->
+<div class="view" id="v-matrix">
+ <div class="card" style="max-width:820px">
+   <h3>The decision matrix — principal × risk tier (live, driven by your strictness config)</h3>
+   <div class="seg" id="preset" style="max-width:520px">
+     <button data-p="paranoid">🔒 Paranoid</button>
+     <button class="on" data-p="balanced">⚖️ Balanced <small>default</small></button>
+     <button data-p="permissive">🕊️ Permissive</button>
+   </div>
+   <table id="mtable">
+     <thead><tr><th>Action</th><th>🧑 You (praxis:local)</th><th>🤖 AI agent (agent:*)</th></tr></thead>
+     <tbody id="mbody"></tbody>
+   </table>
+   <div class="note">Rows are the risk tier of the action. Cells are the outcome. <b>T3 (root/secret)</b> and <b>unknown callers</b> are hard-deny floors — never configurable. Presets mirror <kbd>praxis init</kbd> exactly; "custom" lets you set every cell.</div>
+ </div>
+</div>
+
+<!-- ============ VIEW: ARCHITECTURE ============ -->
+<div class="view" id="v-arch">
+ <div class="grid3">
+  <div class="card"><h3>The layers (click any box)</h3><div id="arch"></div></div>
+  <div class="card"><h3>Detail</h3><div class="narr" id="archNarr"><div class="step">Click a component to see exactly what it does — grounded in the real modules.</div></div>
+    <div class="note">Legend: everything above the OS line is one local daemon + per-client MCP subprocesses. No network. No server. Your files never leave the machine.</div>
+  </div>
+  <div class="card"><h3>The 6-line whiteboard</h3><ol style="font-size:13px;line-height:1.7;color:var(--dim);padding-left:18px">
+    <li>Agents act; nobody guards the action boundary → Praxis returns <b>allow/block/ask</b> there.</li>
+    <li>An unforgeable <b>principal</b> (local key/HMAC vs agent token) rides a normalized <b>ActionEvent</b>.</li>
+    <li><b>Policy</b> = principal × <b>risk-tier</b> matrix + deterministic→embedding classification + user config.</li>
+    <li><b>Executor</b> = fail-closed pipeline: kill-switch → policy → approval → dispatch; destructive → trash-first.</li>
+    <li><b>Evidence</b> = append-only SHA-256 <b>hash chain</b> (tamper-evident).</li>
+    <li>Today MCP + on-device + offline. Next: <b>OS-level</b> (EndpointSecurity/eBPF) for guaranteed interception.</li>
+  </ol></div>
+ </div>
+</div>
+
+<script>
+/* ---------------- shared state ---------------- */
+const S={who:'local',act:'read',layer:'mcp',choice:'praxis',preset:'balanced'};
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById('v-'+b.dataset.v).classList.add('on');
+});
+
+/* ================= VIEW 1: FLOW ================= */
+const STAGES=[
+ {id:'caller',ico:'📨',t:'Caller makes a request',d:''},
+ {id:'ident', ico:'🪪',t:'Transport · Identity',d:'Resolve an unforgeable principal'},
+ {id:'event', ico:'📦',t:'Normalize → ActionEvent',d:'action + path + risk tier + request_id'},
+ {id:'kill',  ico:'🛑',t:'Kill switch',d:'Global panic check'},
+ {id:'policy',ico:'⚖️',t:'Policy engine',d:'principal × tier matrix + classification'},
+ {id:'approve',ico:'🙋',t:'Approval (if “ask”)',d:'Human-in-the-loop; default = deny'},
+ {id:'exec',  ico:'⚙️',t:'Executor · dispatch',d:'Destructive ops → trash-before-destroy'},
+ {id:'eviden',ico:'🔗',t:'Evidence vault',d:'Append-only SHA-256 hash chain'},
+ {id:'result',ico:'↩️',t:'Result → caller',d:''},
+];
+const DETAIL={
+ caller:'Entry point. MCP model: an agent calls a Praxis tool (fs_delete) over stdio JSON-RPC, or you use the CLI over the local Unix socket. OS model: ANY tool bottoms out at a kernel syscall.',
+ ident:'The unforgeable “who”. Local = possession of a 0600 local key, proven by HMAC challenge–response over a 0600 Unix socket. Agent = an HMAC-signed capability token naming the agent. Invalid → unknown → deny. How identity was proven is logged but NEVER used for the decision.',
+ event:'The call is normalized into one ActionEvent {principal, action, paths, resolved_tier, request_id} that travels the whole pipeline. Tier is intrinsic to the action: read=T0, write=T1, delete/move/overwrite=T2, root/irreversible=T3.',
+ kill:'A global panic switch. If fired, the executor refuses instantly and cancels all pending approvals. Fail-closed.',
+ policy:'Two layers, most-restrictive-wins. (1) tier gate: principal × tier → allow/ask/block from your config; unknown & T3 are hard-deny floors. (2) classification: deterministic 200+ term keyword/phonetic cascade, then BGE embeddings for novel/cross-language intents. No LLM in the path → ~2 ms.',
+ approve:'Only for “ask”. Human-in-the-loop prompt; default = DENY. An approval can mint a scoped, time-boxed capability so a batch proceeds without re-prompting.',
+ exec:'Runs the concrete op. Destructive ops STAGE TO TRASH FIRST, then mutate → recoverable 24h. Every branch (block/deny/timeout/error/success) still records evidence.',
+ eviden:'Append-only evidence.jsonl. Each record’s SHA-256 hash includes the previous record’s hash (chain starts at “genesis”). Edit any past record and every later hash breaks → tamper-evident.',
+ result:'A structured FSResult goes back: allowed + data, or blocked/needs-approval with the matched rule and reason.'
+};
+function buildPipe(){
+  const p=document.getElementById('pipe');p.innerHTML='';
+  STAGES.forEach((s,i)=>{
+    const n=document.createElement('div');n.className='node';n.id='n-'+s.id;
+    n.innerHTML=`<div class="ico">${s.ico}</div><div><div class="t">${s.t}</div><div class="d" id="d-${s.id}">${s.d}</div></div><div class="badge" id="b-${s.id}"></div>`;
+    n.onclick=()=>setNarr('narr',[{cur:true,html:`<b>${s.t}</b><br>${DETAIL[s.id]}`}]);p.appendChild(n);
+    if(i<STAGES.length-1){const c=document.createElement('div');c.className='conn';c.id='c-'+i;c.innerHTML='<div class="dot"></div>';p.appendChild(c);}
+  });
+  refreshLabels();
+}
+function decide(who,act){
+  const isA=who==='agent';
+  if(act==='ssh')  return{tier:'T3',verdict:'BLOCK',rule:'fs_path.refused_read',reason:'Credential store — refused for EVERY caller.'};
+  if(act==='read') return{tier:'T0',verdict:'ALLOW',rule:`tier_gate.${who}_t0`,reason:'Reads are permitted.'};
+  if(act==='write')return isA?{tier:'T1',verdict:'ASK',rule:'tier_gate.agent_t1',reason:'An agent write needs your approval.'}:{tier:'T1',verdict:'ALLOW',rule:'tier_gate.local_t1',reason:'You may write freely.'};
+  return isA?{tier:'T2',verdict:'BLOCK',rule:'tier_gate.agent_t2',reason:'Destructive op from an agent is blocked by default.'}:{tier:'T2',verdict:'ASK',rule:'tier_gate.local_t2',reason:'A destructive op from you asks for confirmation.'};
+}
+function pathFor(v){return v==='BLOCK'?['caller','ident','event','kill','policy','eviden','result']:v==='ASK'?['caller','ident','event','kill','policy','approve','exec','eviden','result']:['caller','ident','event','kill','policy','exec','eviden','result'];}
+function refreshLabels(){
+  const os=S.layer==='os';
+  document.getElementById('d-caller').textContent=os?'Any tool → a kernel syscall (open / unlink / execve)':'Agent calls an MCP tool  •  you use the CLI over a Unix socket';
+  document.getElementById('d-ident').textContent=os?'Principal derived from the PROCESS tree (agent app vs your app)':(S.who==='agent'?'agent:codex — proven by an HMAC-signed capability token':'praxis:local — proven by HMAC over a 0600 Unix socket');
+  document.getElementById('layerHint').innerHTML=os?'🧠 <b>OS-level:</b> the kernel pauses on <kbd>AUTH_OPEN/UNLINK/EXEC</kbd> and asks Praxis allow/deny — <b>unbypassable</b>. Same engine, lower door.':'🧠 <b>MCP:</b> Praxis is a tool the agent <i>can</i> call — <b>bypassable</b> if it uses its own native file tools. Great reach, best-effort.';
+  document.getElementById('whoNote').innerHTML=S.who==='agent'?'🤖 <b>agent:codex</b> — external AI. Reads OK; writes need approval; deletes blocked; secrets refused.':'🧑 <b>praxis:local</b> — you. Read/write freely; destructive ops confirm; secrets still refused.';
+}
+function setNarr(id,items){const n=document.getElementById(id);n.innerHTML='';items.forEach(it=>{const d=document.createElement('div');d.className='step'+(it.cur?' cur':'');d.innerHTML=it.html;n.appendChild(d);});}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let running=false;
+async function run(){
+  if(running)return;running=true;document.getElementById('run').disabled=true;
+  STAGES.forEach(s=>{const n=document.getElementById('n-'+s.id);n.className='node';const b=document.getElementById('b-'+s.id);b.textContent='';b.className='badge';});
+  for(let i=0;i<STAGES.length-1;i++)document.getElementById('c-'+i).classList.remove('flow');
+  const {tier,verdict,rule,reason}=decide(S.who,S.act);const order=pathFor(verdict);
+  STAGES.map(s=>s.id).filter(id=>!order.includes(id)).forEach(id=>document.getElementById('n-'+id).classList.add('skip'));
+  const v=document.getElementById('verdict');v.className='verdict';v.innerHTML='<div class="big">…</div><div class="sub">evaluating…</div>';
+  const steps=[];
+  for(let k=0;k<order.length;k++){
+    const id=order[k],node=document.getElementById('n-'+id);node.classList.add('active');let line='';
+    if(id==='caller')line=`<b>Caller</b>: ${S.who==='agent'?'agent':'you'} requested <b>${S.act.toUpperCase()}</b> ${S.layer==='os'?'(as a syscall)':'(as an MCP/CLI call)'}.`;
+    else if(id==='ident'){const b=document.getElementById('b-ident');b.textContent=S.who==='agent'?'agent:codex':'praxis:local';b.className='badge t';line=`<b>Identity</b>: resolved as <b>${S.who==='agent'?'agent:codex':'praxis:local'}</b> (${S.layer==='os'?'from process tree':(S.who==='agent'?'capability token':'Unix-socket HMAC')}).`;}
+    else if(id==='event'){const b=document.getElementById('b-event');b.textContent=tier;b.className='badge t';line=`<b>ActionEvent</b>: action=<b>${S.act.toUpperCase()}</b>, tier=<b>${tier}</b>.`;}
+    else if(id==='kill')line=`<b>Kill switch</b>: not fired → continue.`;
+    else if(id==='policy'){line=`<b>Policy</b>: matched <b>${rule}</b> → <b>${verdict}</b>. ${reason}`;node.classList.add(verdict==='ALLOW'?'v-allow':verdict==='BLOCK'?'v-block':'v-ask');const b=document.getElementById('b-policy');b.textContent=verdict;}
+    else if(id==='approve')line=`<b>Approval</b>: prompting you… ✅ approved (scoped, time-boxed).`;
+    else if(id==='exec')line=`<b>Executor</b>: ${S.act==='delete'?'staged to trash, then deleted (recoverable 24h)':'performed the op'}.`;
+    else if(id==='eviden')line=`<b>Evidence</b>: appended record, hash-chained to previous.`;
+    else if(id==='result')line=`<b>Result</b>: returned <b>${verdict}</b> to the caller.`;
+    steps.unshift({cur:true,html:line});steps.forEach((s,idx)=>s.cur=idx===0);setNarr('narr',steps);
+    await sleep(600);node.classList.remove('active');node.classList.add('done');
+    if(id==='policy'&&verdict==='BLOCK'){steps.unshift({cur:true,html:'⛔ <b>Short-circuit</b>: blocked → skip approval &amp; executor, jump to evidence.'});steps.forEach((s,idx)=>s.cur=idx===0);setNarr('narr',steps);}
+    const gi=STAGES.findIndex(s=>s.id===id);if(order[k+1]&&document.getElementById('c-'+gi))document.getElementById('c-'+gi).classList.add('flow');
+    await sleep(110);
+  }
+  v.className='verdict '+verdict.toLowerCase();
+  v.innerHTML=`<div class="big">${verdict==='ALLOW'?'✅ ALLOW':verdict==='BLOCK'?'⛔ BLOCK':'🙋 ASK'}</div><div class="sub">${reason}</div><div class="rule">${rule}</div>`;
+  running=false;document.getElementById('run').disabled=false;
+}
+document.querySelectorAll('#who button').forEach(b=>b.onclick=()=>{S.who=b.dataset.who;document.querySelectorAll('#who button').forEach(x=>x.classList.remove('on'));b.classList.add('on');refreshLabels();});
+document.querySelectorAll('#acts button').forEach(b=>b.onclick=()=>{S.act=b.dataset.act;document.querySelectorAll('#acts button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+document.querySelectorAll('#layer button').forEach(b=>b.onclick=()=>{S.layer=b.dataset.layer;document.querySelectorAll('#layer button').forEach(x=>x.classList.remove('on'));b.classList.add('on');refreshLabels();});
+document.getElementById('run').onclick=run;
+
+/* ================= VIEW 2: INTERCEPTION MODELS ================= */
+const MODELS=[
+ {id:'wrap',name:'1 · SecureBrowser',sub:'Praxis IS the browser (wraps Playwright).',analogy:'🖥️ Company laptop with monitoring built in — no other laptop exists.',where:'On the road',caughtNative:true},
+ {id:'proxy',name:'2 · MCP Proxy',sub:'Agent → Praxis → downstream tools.',analogy:'📬 Mailroom — all outgoing mail is opened & checked.',where:'On the road',caughtNative:true},
+ {id:'server',name:'3 · MCP Server',sub:'Praxis OFFERS tools the agent MAY call.',analogy:'🛎️ Concierge desk — helpful, but the agent has its own hands.',where:'Beside the road',caughtNative:false},
+ {id:'os',name:'4 · OS-level',sub:'Authorizer on the syscall (ES / eBPF).',analogy:'🚪 The building’s doors — every path ends here.',where:'Below everything',caughtNative:true},
+];
+function buildModels(){
+  const wrap=document.getElementById('models');wrap.innerHTML='';
+  MODELS.forEach(m=>{
+    const usingPraxis=S.choice==='praxis';
+    const caught = usingPraxis ? true : m.caughtNative;   // if agent cooperates, all catch it
+    const el=document.createElement('div');el.className='model';
+    el.innerHTML=`<h4>${m.name}</h4><div class="sub2">${m.sub}</div>
+      <div class="row">${m.analogy}</div>
+      <div class="row"><b>Where Praxis sits:</b> ${m.where}</div>
+      <span class="pill ${m.caughtNative?'ok':'no'}">${m.caughtNative?'Unbypassable':'Bypassable'}</span>
+      <div class="result ${caught?'caught':'escaped'}">${caught?'✅ Intercepted':'✗ Bypassed — Praxis never sees it'}</div>`;
+    wrap.appendChild(el);
+  });
+}
+document.querySelectorAll('#choice button').forEach(b=>b.onclick=()=>{S.choice=b.dataset.choice;document.querySelectorAll('#choice button').forEach(x=>x.classList.remove('on'));b.classList.add('on');buildModels();});
+
+/* ================= VIEW 3: OS ATTRIBUTION ================= */
+document.querySelectorAll('#tree .proc').forEach(p=>p.onclick=()=>{
+  document.querySelectorAll('#tree .proc').forEach(x=>x.classList.remove('sel'));p.classList.add('sel');
+  const agent=p.dataset.k==='agent';const v=document.getElementById('attrVerdict');
+  const names={finder:'Finder',yourzsh:'your zsh',vscode:'VS Code',codex:'Codex.app',agentzsh:'zsh spawned by Codex',agentrm:'/bin/rm spawned by Codex'};
+  if(agent){v.className='verdict block';v.innerHTML='<div class="big">🤖 agent → GATED</div><div class="sub">policy applies: delete = blocked (or asks you)</div><div class="rule">principal = agent:codex (via process tree)</div>';
+    setNarr('attrNarr',[{cur:true,html:`<b>${names[p.dataset.p]}</b> descends from <b>Codex.app</b>, a watched agent root → attributed <b>agent:codex</b> → the delete hits the policy engine (blocked by default).`}]);}
+  else{v.className='verdict allow';v.innerHTML='<div class="big">🧑 you → ALLOW</div><div class="sub">your own app — never prompted</div><div class="rule">principal = praxis:local (via process tree)</div>';
+    setNarr('attrNarr',[{cur:true,html:`<b>${names[p.dataset.p]}</b> is <b>your</b> process, not under any agent → attributed <b>praxis:local</b> → the delete flows freely, <b>zero prompts</b>. That’s why a real user isn’t spammed.`}]);}
+});
+
+/* ================= VIEW 4: POLICY MATRIX ================= */
+const PRESETS={
+ paranoid:{local:{read:'allow',write:'ask',delete:'ask'},agent:{read:'allow',write:'block',delete:'block'}},
+ balanced:{local:{read:'allow',write:'allow',delete:'ask'},agent:{read:'allow',write:'ask',delete:'block'}},
+ permissive:{local:{read:'allow',write:'allow',delete:'allow'},agent:{read:'allow',write:'ask',delete:'ask'}},
+};
+const ROWS=[['read','Read a file (T0)'],['write','Write a file (T1)'],['delete','Delete / overwrite (T2)']];
+function buildMatrix(){
+  const P=PRESETS[S.preset],b=document.getElementById('mbody');b.innerHTML='';
+  ROWS.forEach(([k,label])=>{
+    const l=P.local[k],a=P.agent[k];
+    b.innerHTML+=`<tr><td class="rowh">${label}</td><td class="cell ${l}">${l.toUpperCase()}</td><td class="cell ${a}">${a.toUpperCase()}</td></tr>`;
+  });
+  b.innerHTML+=`<tr><td class="rowh">Root / secret (T3)</td><td class="cell block">BLOCK</td><td class="cell block">BLOCK</td></tr>`;
+  b.innerHTML+=`<tr><td class="rowh">Unauthenticated (unknown)</td><td class="cell block">BLOCK</td><td class="cell block">BLOCK</td></tr>`;
+}
+document.querySelectorAll('#preset button').forEach(bt=>bt.onclick=()=>{S.preset=bt.dataset.p;document.querySelectorAll('#preset button').forEach(x=>x.classList.remove('on'));bt.classList.add('on');buildMatrix();});
+
+/* ================= VIEW 5: ARCHITECTURE ================= */
+const ARCH=[
+ {id:'trans',ico:'🪪',t:'Transport · Identity',d:'MCP server (agent:*) and a 0600 Unix socket (praxis:local). Resolves the unforgeable principal that rides every ActionEvent. Files/modules: principal.py, transports/local_socket.py, mcp/praxis_server.py.'},
+ {id:'pol',ico:'⚖️',t:'Policy engine',d:'principal × risk-tier matrix (config-driven) + a deterministic keyword/phonetic cascade + BGE embeddings for novel/cross-language intent. Emits allow / block / require-approval. Files: policy/tier_gate.py, policy/engine.py, policy/semantic_matcher.py, config.py.'},
+ {id:'exe',ico:'⚙️',t:'Executor',d:'Fail-closed pipeline: kill-switch → policy → approval → dispatch. Destructive ops trash-before-destroy. Every outcome recorded. Files: filesystem/executor.py, filesystem/trash.py, approval/coordinator.py, kill_switch.py.'},
+ {id:'ev',ico:'🔗',t:'Evidence vault',d:'Append-only evidence.jsonl; each record SHA-256 hash-chained to the previous → tamper-evident. Files: evidence/vault.py.'},
+ {id:'off',ico:'📴',t:'Offline & surfaces',d:'Local model serving (Ollama) + runbook cache/replay for offline. Surfaces: MCP fs-server, MCP gateway proxy, and the browser wrapper. Files: llm/, runbook/, mcp/proxy.py, interceptor/browser.py.'},
+ {id:'osl',ico:'🧬',t:'OS-level (roadmap)',d:'macOS EndpointSecurity / Linux eBPF-LSM authorizer on file/exec syscalls → guaranteed, unbypassable interception, same engine one layer down. Plus signed-policy + attestation of the enforcement binary.'},
+];
+function buildArch(){
+  const a=document.getElementById('arch');a.innerHTML='';
+  ARCH.forEach((s,i)=>{
+    const n=document.createElement('div');n.className='node';n.innerHTML=`<div class="ico">${s.ico}</div><div><div class="t">${s.t}</div><div class="d">${s.id==='osl'?'roadmap':'shipped'}</div></div>`;
+    n.onclick=()=>setNarr('archNarr',[{cur:true,html:`<b>${s.t}</b><br>${s.d}`}]);a.appendChild(n);
+    if(i<ARCH.length-1){const c=document.createElement('div');c.className='conn';a.appendChild(c);}
+  });
+}
+
+/* init */
+buildPipe();buildModels();buildMatrix();buildArch();
+</script>
+</body>
+</html>

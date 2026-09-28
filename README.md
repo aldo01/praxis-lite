@@ -38,6 +38,7 @@ hash-chained log, and you turn it on or off per AI tool with one command.
   <a href="#install">Install</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#how-it-works">How it works</a> ·
+  <a href="https://htmlpreview.github.io/?https://github.com/praxisgaurdrails/praxis-lite/blob/main/docs/how-it-works.html">Interactive demo</a> ·
   <a href="#what-it-looks-like">See it work</a> ·
   <a href="#lite-vs-pro">Lite vs Pro</a> ·
   <a href="#security">Security</a>
@@ -214,6 +215,8 @@ still work.
 ---
 
 ## How it works
+
+> 🖱️ **Prefer to click around?** Open the **[interactive explainer](https://htmlpreview.github.io/?https://github.com/praxisgaurdrails/praxis-lite/blob/main/docs/how-it-works.html)** — pick *who* is calling and *what* they want, hit Run, and watch the request flow through the pipeline to a verdict. It also covers the interception models, OS-level attribution, the live policy matrix, and the architecture. Runs entirely in your browser. *(Or download [`docs/how-it-works.html`](docs/how-it-works.html) and open it locally.)*
 
 The core idea is **caller identity**. Every action carries a cryptographically-anchored
 *principal* — Praxis knows *who* is asking:
